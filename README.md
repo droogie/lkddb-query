@@ -4,6 +4,12 @@ This is a small hacked together script that will parse the [LKDDb database](http
 
 This was created to have a quick way to easily get the definition for a specific Linux kernel configuration option on the command line
 
+## Clone
+
+```
+git clone --recurse-submodules https://github.com/droogie/lkddb-query
+```
+
 ## Usage
 
 ```
@@ -38,7 +44,7 @@ This value can be changed after boot using the
 /proc/sys/vm/mmap_min_addr tunable.
 ```
 
-## llkdb
+## LKDDb 
 
 LKDDb (Linux Kernel Driver DataBase) is an attempt to build a comprensive database of hardware and protocols know by Linux kernels. The driver database includes numeric identifiers of hardware, the kernel configuration menu needed to build the driver and the driver filename. The database is build automagically from kernel sources, so it is very easy to have always the database updated.
 

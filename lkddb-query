@@ -1,6 +1,6 @@
 #!/bin/python
 import sys
-sys.path.append('./lkddb/')
+sys.path.append(sys.path[0]+'/lkddb/')
 
 import argparse
 from contextlib import redirect_stderr
@@ -64,7 +64,7 @@ def config_var_check(string):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
        description="Parse an LKDDb for a specific Linux Kernel configuration option for details" )
-    parser.set_defaults(database="./kddb.data")
+    parser.set_defaults(database=sys.path[0] + "/kddb.data")
     parser.add_argument(dest='config_var', type=config_var_check, help="Example: CONFIG_DEFAULT_MMAP_MIN_ADDR")
 
     args = parser.parse_args()
