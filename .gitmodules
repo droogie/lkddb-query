@@ -1,0 +1,3 @@
+[submodule "lkddb"]
+	path = lkddb
+	url = https://github.com/cateee/lkddb

@@ -1,0 +1,75 @@
+#!/bin/python
+import sys
+sys.path.append('./lkddb/')
+
+import argparse
+from contextlib import redirect_stderr
+
+import lkddb
+import lkddb.ids
+import lkddb.linux
+import lkddb.tables
+
+tables = {}
+configs = {}
+ids = {}
+config_pages = {}
+
+def assemble_config_data(storage):
+    for tab_name, tab_data in storage.available_tables.items():
+        t = tab_data[1]
+        tables[tab_name] = t
+        if t.kind == ("linux-kernel", "device") or (
+           t.kind == ("linux-kernel", "special") and t.name == "kconf"):
+            for key1, values1 in t.crows.items():
+                for key2, values2 in values1.items():
+                    for config in key2[0].split():
+                        if not config.startswith("CONFIG_") or config == "CONFIG_":
+                            continue
+                        if config not in configs:
+                            configs[config] = {}
+                        if t.name not in configs[config]:
+                            configs[config][t.name] = []
+                        configs[config][t.name].append((key1, key2, values2[0],
+                            list(sorted(values2[1], key=lambda ver: ver[1]))))
+
+def parse(args):
+    linux_tree = lkddb.linux.LinuxKernelTree(lkddb.TASK_CONSOLIDATE, None, [])
+    ids_tree = lkddb.ids.IdsTree(lkddb.TASK_CONSOLIDATE, None, None, None, None)
+    storage = lkddb.Storage((linux_tree, ids_tree))
+
+    storage.read_data(args.database)
+
+    assemble_config_data(storage)
+    for config_full in sorted(configs.keys()):
+        table = configs[config_full]
+        if 'kconf' in table:
+            rows = table['kconf']
+            for key1, key2, values, versions in sorted(rows, reverse=True,
+                    key=lambda row: (row[3][-1][1], len(row[0][1]), row[1][1], row[0], row[1], row[2])):
+                typ, descr = key1
+                c, filename = key2
+                depends, helptext = values
+                descr = descr.strip()
+                if (config_full == args.config_var):
+                    print(config_full + ": " + descr +"\n\n" + helptext + "\n")
+                    break
+
+def config_var_check(string):
+    if not (string.startswith('CONFIG_')):
+        msg = "Provide a valid Linux Kernel configuration option. e.g. CONFIG_DEFAULT_MMAP_MIN_ADDR"
+        raise argparse.ArgumentTypeError(msg)
+    return string
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+       description="Parse an LKDDb for a specific Linux Kernel configuration option for details" )
+    parser.set_defaults(database="./kddb.data")
+    parser.add_argument(dest='config_var', type=config_var_check, help="Example: CONFIG_DEFAULT_MMAP_MIN_ADDR")
+
+    args = parser.parse_args()
+
+    # redirecting stderr to avoid the asserts() from lkddb
+    with open('/dev/null', 'w') as f:
+        with redirect_stderr(f):
+            parse(args)
